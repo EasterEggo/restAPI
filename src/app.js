@@ -46,10 +46,12 @@ async function deleteFrom(table, value) {
 }
 
 app.get('/v1/cnpq', (req, res) => {
-  viewTable('cnpq').then(result => res.json(result.rows))
+  viewTable('cnpq')
+    .then(result => res.json(result.rows))
 })
 app.get('/v1/cnpq/:id', (req, res) => {
-  viewTable('cnpq', 'id', req.params.id).then((result) => res.json(result.rows[0]))
+  viewTable('cnpq', 'id', req.params.id)
+    .then((result) => res.json(result.rows[0]))
 })
 app.post('/v1/cnpq', (req, res) => {
   const { nome, subarea } = req.body
@@ -57,11 +59,13 @@ app.post('/v1/cnpq', (req, res) => {
     res.send("MISSING DATA")
     return console.error("ERROR:MISSING DATA")
   }
-  insertCnpq(nome, subarea).then((result) => res.send(result.rows))
+  insertCnpq(nome, subarea)
+    .then((result) => res.send(result.rows))
 })
 
 app.delete('/v1/cnpq/:id', (req, res) => {
-  deleteFrom('cnpq', req.params.id).then((result) => res.send(result.rowCount === 0 ? "ID not found on database" : `Row with ID ${req.params.id} deleted successfully`))
+  deleteFrom('cnpq', req.params.id)
+    .then((result) => res.send(result.rowCount === 0 ? "ID not found on database" : `Row with ID ${req.params.id} deleted successfully`))
 })
 
 app.listen(port, () => {
