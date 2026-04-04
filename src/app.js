@@ -22,8 +22,11 @@ const pool = new Pool({
 })
 
 async function viewTable(table, param, value) {
-  let query = param === undefined ? `SELECT * FROM ${table}` : `SELECT * FROM ${table} WHERE ${param} = ${value}`
-  let data = await pool.query(query)
+  const tab = table.toString()
+  const par = param.toString()
+  const val = value.toString()
+  const query = param === undefined ? `SELECT * FROM ${tab}` : `SELECT * FROM ${tab} WHERE ${par} = ${val}`
+  const data = await pool.query(query)
   return data
 }
 
@@ -60,7 +63,7 @@ app.post('/v1/cnpq', (req, res) => {
     return console.error("ERROR:MISSING DATA")
   }
   insertCnpq(nome, subarea)
-    .then((result) => res.send(result.rows))
+    .then((result) => res.json(result.rows))
 })
 
 app.delete('/v1/cnpq/:id', (req, res) => {
