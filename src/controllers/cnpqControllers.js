@@ -1,4 +1,4 @@
-const f = require('../utils/dbFunctions')
+const f = require('../utils/cnpqFunctions')
 const viewFull = async (req, res) => {
   f.viewTable('cnpq')
     .then(result => res.json(result.rows))
@@ -19,7 +19,7 @@ const insertData = async (req, res) => {
 
 const delById = async (req, res) => {
   f.deleteFrom('cnpq', req.params.id)
-    .then((result) => res.send(result.rowCount === 0 ? "ID not found on database" : `Row with ID ${req.params.id} deleted successfully`))
+    .then((result) => res.json(result.rowCount === 0 ? "ID not found on database" : `Row with ID ${req.params.id} deleted successfully`))
 }
 module.exports = {
   viewFull,

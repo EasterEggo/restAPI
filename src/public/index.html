@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Client</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;700;800&display=swap"
+    rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0d0f14;
+      --surface: #161920;
+      --border: #252a35;
+      --accent: #00e5a0;
+      --accent-dim: rgba(0, 229, 160, 0.12);
+      --text: #e8eaf0;
+      --muted: #6b7280;
+      --get: #38bdf8;
+      --post: #4ade80;
+      --patch: #fb923c;
+      --delete: #f87171;
+      --radius: 10px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px;
+    }
+
+    /* subtle grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, .025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, .025) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 720px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo {
+      width: 38px;
+      height: 38px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo svg {
+      display: block;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    h1 span {
+      color: var(--accent);
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .card-title {
+      font-size: 0.7rem;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    /* Method selector */
+    .method-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .method-btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 7px 16px;
+      border-radius: 6px;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      cursor: pointer;
+      transition: all .18s;
+      letter-spacing: 0.05em;
+    }
+
+    .method-btn[data-method="GET"] {
+      color: var(--get);
+    }
+
+    .method-btn[data-method="POST"] {
+      color: var(--post);
+    }
+
+    .method-btn[data-method="PATCH"] {
+      color: var(--patch);
+    }
+
+    .method-btn[data-method="DELETE"] {
+      color: var(--delete);
+    }
+
+    .method-btn.active[data-method="GET"] {
+      background: rgba(56, 189, 248, .15);
+      border-color: var(--get);
+    }
+
+    .method-btn.active[data-method="POST"] {
+      background: rgba(74, 222, 128, .15);
+      border-color: var(--post);
+    }
+
+    .method-btn.active[data-method="PATCH"] {
+      background: rgba(251, 146, 60, .15);
+      border-color: var(--patch);
+    }
+
+    .method-btn.active[data-method="DELETE"] {
+      background: rgba(248, 113, 113, .15);
+      border-color: var(--delete);
+    }
+
+    .method-btn:hover:not(.active) {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* URL row */
+    .url-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .method-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      min-width: 66px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      border: 1.5px solid var(--border);
+      padding: 0 12px;
+      letter-spacing: 0.08em;
+      transition: all .2s;
+    }
+
+    input,
+    textarea {
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.84rem;
+      padding: 10px 14px;
+      width: 100%;
+      transition: border-color .18s;
+      outline: none;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: var(--accent);
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: var(--muted);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+      line-height: 1.5;
+    }
+
+    label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .fields-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 480px) {
+      .fields-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .body-section {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* send button */
+    .send-btn {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      background: var(--accent);
+      color: #0d0f14;
+      border: none;
+      border-radius: 8px;
+      padding: 13px 28px;
+      cursor: pointer;
+      align-self: flex-end;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: opacity .18s, transform .12s;
+    }
+
+    .send-btn:hover {
+      opacity: .88;
+    }
+
+    .send-btn:active {
+      transform: scale(.97);
+    }
+
+    .send-btn.loading {
+      opacity: .6;
+      pointer-events: none;
+    }
+
+    /* Response */
+    .response-card {
+      gap: 14px;
+    }
+
+    .response-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      transition: all .2s;
+    }
+
+    .status-pill.ok {
+      background: rgba(74, 222, 128, .15);
+      color: var(--post);
+    }
+
+    .status-pill.err {
+      background: rgba(248, 113, 113, .15);
+      color: var(--delete);
+    }
+
+    .status-pill.warn {
+      background: rgba(251, 146, 60, .15);
+      color: var(--patch);
+    }
+
+    .response-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .response-body {
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      padding: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-all;
+      min-height: 80px;
+      max-height: 320px;
+      overflow-y: auto;
+      color: var(--text);
+    }
+
+    .copy-btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 5px;
+      padding: 4px 10px;
+      cursor: pointer;
+      align-self: flex-end;
+      transition: all .15s;
+    }
+
+    .copy-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .placeholder-text {
+      color: var(--muted);
+      font-style: italic;
+      font-size: 0.78rem;
+    }
+
+    /* scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <!-- Request card -->
+    <div class="card">
+      <span class="card-title">Requisição</span>
+
+      <div>
+        <label>Método</label>
+        <div class="method-group">
+          <button class="method-btn active" data-method="GET">GET</button>
+          <button class="method-btn" data-method="POST">POST</button>
+          <button class="method-btn" data-method="PATCH">PATCH</button>
+          <button class="method-btn" data-method="DELETE">DELETE</button>
+        </div>
+      </div>
+
+      <div>
+        <label>URL do endpoint</label>
+        <div class="url-row">
+          <div class="method-badge" id="badgeMethod">GET</div>
+          <input type="text" id="urlInput" placeholder="https://sua-api.com/recurso/1" />
+        </div>
+      </div>
+
+      <!-- Body fields (POST / PATCH only) -->
+      <div class="body-section" id="bodySection" style="display:none">
+        <div class="fields-grid">
+          <div class="field">
+            <label>nome</label>
+            <input type="text" id="fieldNome" placeholder="Ex: Tecnologia" />
+          </div>
+          <div class="field">
+            <label>subareas</label>
+            <input type="text" id="fieldSubareas" placeholder='Ex: ["Dev", "UX"]' />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>JSON body extra (opcional)</label>
+          <textarea id="bodyExtra" placeholder='{ "outro_campo": "valor" }'></textarea>
+        </div>
+      </div>
+
+      <button class="send-btn" id="sendBtn" onclick="sendRequest()">
+        Enviar
+      </button>
+    </div>
+
+    <!-- Response card -->
+    <div class="card response-card">
+      <span class="card-title">Resposta</span>
+      <div class="response-meta">
+        <span class="status-pill" id="statusPill">—</span>
+        <span class="response-time" id="responseTime"></span>
+      </div>
+      <pre class="response-body" id="responseBody"><span class="placeholder-text">A resposta da API aparecerá
+          aqui...</span></pre>
+      <button class="copy-btn" onclick="copyResponse()">copiar</button>
+    </div>
+  </div>
+
+  <script>
+    let currentMethod = 'GET';
+
+    // Method selection
+    document.querySelectorAll('.method-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentMethod = btn.dataset.method;
+
+        // badge
+        const badge = document.getElementById('badgeMethod');
+        badge.textContent = currentMethod;
+        badge.style.color = getMethodColor(currentMethod);
+        badge.style.borderColor = getMethodColor(currentMethod);
+
+        // show/hide body
+        const bodySection = document.getElementById('bodySection');
+        bodySection.style.display = ['POST', 'PATCH'].includes(currentMethod) ? 'flex' : 'none';
+      });
+    });
+
+    function getMethodColor(m) {
+      return {GET: '#38bdf8', POST: '#4ade80', PATCH: '#fb923c', DELETE: '#f87171'}[m] || '#fff';
+    }
+
+    async function sendRequest() {
+      const url = document.getElementById('urlInput').value.trim();
+      if (!url) {alert('Informe a URL do endpoint.'); return;}
+
+      const btn = document.getElementById('sendBtn');
+      btn.classList.add('loading');
+      btn.textContent = 'Enviando...';
+
+      const t0 = Date.now();
+
+      try {
+        const options = {method: currentMethod, headers: {'Content-Type': 'application/json'}};
+
+        if (['POST', 'PATCH'].includes(currentMethod)) {
+          const nome = document.getElementById('fieldNome').value.trim();
+          const subarea = document.getElementById('fieldSubareas').value.trim();
+          let extra = {};
+          const extraRaw = document.getElementById('bodyExtra').value.trim();
+          if (extraRaw) {
+            try {extra = JSON.parse(extraRaw);} catch {alert('JSON body extra inválido.'); return;}
+          }
+
+          let subValue = subarea;
+          try {subValue = JSON.parse(subarea);} catch { /* usa string */}
+
+          options.body = JSON.stringify({nome, subarea: subValue, ...extra});
+        }
+
+        const res = await fetch(url, options);
+        const elapsed = Date.now() - t0;
+        let text;
+        try {const json = await res.json(); text = JSON.stringify(json, null, 2);}
+        catch {text = await res.text();}
+
+        setResponse(res.status, text, elapsed);
+      } catch (err) {
+        const elapsed = Date.now() - t0;
+        setResponse(0, `Erro de rede:\n${err.message}`, elapsed);
+      } finally {
+        btn.classList.remove('loading');
+        btn.innerText = `
+          Enviar`;
+      }
+    }
+
+    function setResponse(status, body, ms) {
+      const pill = document.getElementById('statusPill');
+      const timeEl = document.getElementById('responseTime');
+      const bodyEl = document.getElementById('responseBody');
+
+      pill.textContent = status || 'Erro';
+      pill.className = 'status-pill';
+      if (status >= 200 && status < 300) pill.classList.add('ok');
+      else if (status >= 400) pill.classList.add('err');
+      else if (status === 0) pill.classList.add('err');
+      else pill.classList.add('warn');
+
+      timeEl.textContent = `${ms}ms`;
+      bodyEl.textContent = body;
+    }
+
+    function copyResponse() {
+      const text = document.getElementById('responseBody').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        btn.textContent = 'copiado ✓';
+        setTimeout(() => btn.textContent = 'copiar', 1800);
+      });
+    }
+  </script>
+</body>
+
+</html>

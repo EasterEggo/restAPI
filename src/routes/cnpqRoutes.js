@@ -3,7 +3,7 @@ const { viewFull, delById, insertData, viewId } = require('../controllers/cnpqCo
 
 router.get('/', viewFull)
 router.post('/', insertData)
-router.get(':id', viewId)
-router.delete(':id', delById)
+router.get('/:id', viewId)
+router.delete('/:id', delById)
 
 module.exports = router
